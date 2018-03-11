@@ -20,7 +20,7 @@ namespace Righthand.MessageBus.Test
             [Test]
             public void WhenInitialized_NoEntries()
             {
-                var actual = target.GetSubscriptions();
+                var actual = target.GetAllSubscriptions();
 
                 Assert.That(actual, Is.Empty);
             }
@@ -29,7 +29,7 @@ namespace Righthand.MessageBus.Test
             {
                 var subscription = target.Subscribe<object>("key", (k, m) => { });
 
-                var actual = target.GetSubscriptions();
+                var actual = target.GetAllSubscriptions();
 
                 Assert.That(actual, Is.EqualTo(new [] { subscription }));
             }
@@ -39,7 +39,7 @@ namespace Righthand.MessageBus.Test
                 var subscription = target.Subscribe<object>("key", (k, m) => { });
                 subscription.Dispose();
 
-                var actual = target.GetSubscriptions();
+                var actual = target.GetAllSubscriptions();
 
                 Assert.That(actual, Is.Empty);
             }

@@ -4,4 +4,18 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageId>Righthand.MessageBus</PackageId>
+    <Authors>Miha Markic</Authors>
+    <Company>Righthand</Company>
+    <Description>A very simple message bus implementation.</Description>
+    <PackageProjectUrl>https://github.com/MihaMarkic/Cake.MessageBus</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/MihaMarkic/Cake.MessageBus/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageTags>message-bus</PackageTags>
+    <IncludeSymbols>true</IncludeSymbols>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+    <Version>1.0.0</Version>
+    <!--<PackageIconUrl></PackageIconUrl>-->
+  </PropertyGroup>
 </Project>
