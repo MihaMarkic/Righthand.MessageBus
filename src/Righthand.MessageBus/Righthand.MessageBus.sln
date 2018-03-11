@@ -11,12 +11,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Righthand.MessageBus.Sample
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{724F1AF2-9DB9-4E42-B226-14E9604A4999}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rightnand.MessageBus.Android.Sample", "Samples\MessageBus.Android.Sample\MessageBus.Android.Sample\Rightnand.MessageBus.Android.Sample.csproj", "{0409A044-30AE-400B-912A-1B2026E32B33}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{AB725F09-B9A9-462A-A9BB-F17F1D147C9E}"
 	ProjectSection(SolutionItems) = preProject
 		..\..\README.md = ..\..\README.md
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rightnand.MessageBus.Android.Sample", "Samples\Righthand.MessageBus.Android.Sample\Righthand.MessageBus.Android.Sample\Rightnand.MessageBus.Android.Sample.csproj", "{0409A044-30AE-400B-912A-1B2026E32B33}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
