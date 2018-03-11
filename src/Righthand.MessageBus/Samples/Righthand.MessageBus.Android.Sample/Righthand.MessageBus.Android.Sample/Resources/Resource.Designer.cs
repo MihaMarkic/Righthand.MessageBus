@@ -11,7 +11,7 @@
 
 [assembly: global::Android.Runtime.ResourceDesignerAttribute("MessageBus.Android.Sample.Resource", IsApplication=true)]
 
-namespace Righthand.MessageBus.Android.Sample
+namespace MessageBus.Android.Sample
 {
 	
 	
