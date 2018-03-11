@@ -26,6 +26,8 @@ If subscriber subscribes to Root type, it will receive messages when published m
 
 If subscriber subscribes to Derived type, it will receive only Derived type messages.
 
+Supports .NET Standard 2.0 target.
+
 ## History
 
 1.1.0
