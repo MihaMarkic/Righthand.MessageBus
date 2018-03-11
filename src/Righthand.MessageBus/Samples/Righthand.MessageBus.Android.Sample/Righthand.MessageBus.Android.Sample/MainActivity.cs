@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Righthand.MessageBus.Android.Sample
 {
-    [Activity(Label = "MessageBus.Android.Sample", MainLauncher = true)]
+    [Activity(Label = "Righthand.MessageBus.Sample", MainLauncher = true)]
     public class MainActivity : Activity
     {
         Button button;
@@ -53,7 +53,7 @@ namespace Righthand.MessageBus.Android.Sample
             var dialog = new ItemSelectorDialogFragment();
             dialog.Show(FragmentManager, "xy");
             // result is published through dispatcher
-            var message = await Globals.Dispatcher.GetMessageAsync<ItemSelectedMessage>(null, CancellationToken.None);
+            var message = await Globals.Dispatcher.GetMessageAsync<ItemSelectedMessage>(CancellationToken.None);
             // where global ViewModel instance receives it
             viewModel.SelectedItem = message.Item;
         }

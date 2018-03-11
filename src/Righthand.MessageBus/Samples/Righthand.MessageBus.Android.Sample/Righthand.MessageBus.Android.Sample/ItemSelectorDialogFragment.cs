@@ -12,7 +12,7 @@ namespace Righthand.MessageBus.Android.Sample
         public void OnClick(IDialogInterface dialog, int which)
         {
             var message = new ItemSelectedMessage(items[which]);
-            Globals.Dispatcher.Dispatch(null, message);
+            Globals.Dispatcher.Dispatch<object, ItemSelectedMessage>(null, message);
             Dismiss();
         }
         public override Dialog OnCreateDialog(Bundle savedInstanceState)

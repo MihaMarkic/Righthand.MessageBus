@@ -18,10 +18,11 @@ namespace Righthand.MessageBus
         /// <summary>
         /// Dispatches the <paramref name="message"/> with a given <paramref name="key"/>.
         /// </summary>
-        /// <typeparam name="T">Type of <paramref name="message"/>.</typeparam>
+        /// <typeparam name="TKey">Type of key.</typeparam>
+        /// <typeparam name="TMessage">Type of <paramref name="message"/>.</typeparam>
         /// <param name="key">Associated key. Can be null.</param>
         /// <param name="message">An instance of message being published.</param>
-        public void Dispatch<T>(string key, T message)
+        public void Dispatch<TKey, TMessage>(TKey key, TMessage message)
         {
             if (isDisposed)
             {
@@ -29,8 +30,8 @@ namespace Righthand.MessageBus
             }
             foreach (var subscription in GetAllSubscriptions())
             {
-                Action<string, T> action;
-                if ((action = GetActionIfMatches<T>(subscription, key)) != null)
+                Action<TKey, TMessage> action;
+                if ((action = GetActionIfMatches<TKey, TMessage>(subscription, key)) != null)
                 {
                     try
                     {
@@ -43,11 +44,20 @@ namespace Righthand.MessageBus
                 }
             }
         }
-        internal static Action<string, T> GetActionIfMatches<T>(Subscription subscription, string key)
+        /// <summary>
+        /// Dispatches the <paramref name="message"/> without a key.
+        /// </summary>
+        /// <typeparam name="TMessage"></typeparam>
+        /// <param name="message"></param>
+        public void Dispatch<TMessage>(TMessage message)
         {
-            if (subscription.Key == null || string.Equals(subscription.Key, key))
+            Dispatch<object, TMessage>(null, message);
+        }
+        internal static Action<TKey, TMessage> GetActionIfMatches<TKey, TMessage>(Subscription subscription, TKey key)
+        {
+            if (ReferenceEquals(subscription.Key, null) || Equals(subscription.Key, key))
             {
-                if (subscription.Handler is Action<string, T> action)
+                if (subscription.Handler is Action<TKey, TMessage> action)
                 {
                     return action;
                 }
@@ -62,14 +72,15 @@ namespace Righthand.MessageBus
             }
         }
         /// <summary>
-        /// Subscribes to a message type <typeparamref name="T"/> with a given <paramref name="key"/>.
+        /// Subscribes to a message type <typeparamref name="TMessage"/> with a given <paramref name="key"/>.
         /// </summary>
-        /// <typeparam name="T">Type of <paramref name="message"/>.</typeparam>
+        /// <typeparam name="TKey">Type of key.</typeparam>
+        /// <typeparam name="TMessage">Type of message.</typeparam>
         /// <param name="key">Key of message to wait for.</param>
         /// <param name="handler">An instance of handler that is invoked when message is published.</param>
         /// <param name="name">Optional name of the subscription.</param>
         /// <returns>An instance of <see cref="Subscription"/>.</returns>
-        public Subscription Subscribe<T>(string key, Action<string, T> handler, string name = null)
+        public Subscription Subscribe<TKey, TMessage>(TKey key, Action<TKey, TMessage> handler, string name = null)
         {
             if (handler == null)
             {
@@ -79,7 +90,7 @@ namespace Righthand.MessageBus
             {
                 throw new ObjectDisposedException(nameof(Dispatcher));
             }
-            var subscription = new Subscription(key, handler, typeof(T)) { Name = name };
+            var subscription = new Subscription(key, handler, typeof(TMessage)) { Name = name };
             subscription.Disposed += Subscription_Disposed;
             lock (sync)
             {
@@ -87,7 +98,17 @@ namespace Righthand.MessageBus
             }
             return subscription;
         }
-
+        /// <summary>
+        /// Subscribes to a message type <typeparamref name="TMessage"/> with any key.
+        /// </summary>
+        /// <typeparam name="TMessage">Type of message.</typeparam>
+        /// <param name="handler">An instance of handler that is invoked when message is published.</param>
+        /// <param name="name">Optional name of the subscription.</param>
+        /// <returns>An instance of <see cref="Subscription"/>.</returns>
+        public Subscription Subscribe<TMessage>(Action<object, TMessage> handler, string name = null)
+        {
+            return Subscribe(null, handler, name);
+        }
         void Subscription_Disposed(object sender, EventArgs e)
         {
             Subscription subscription = (Subscription)sender;
@@ -96,17 +117,18 @@ namespace Righthand.MessageBus
             subscriptions.Remove(subscription);
         }
         /// <summary>
-        /// Waits asynchronously for a message of type <typeparamref name="T"/> and <paramref name="key"/>.
+        /// Waits asynchronously for a message of type <typeparamref name="TMessage"/> and <paramref name="key"/>.
         /// </summary>
-        /// <typeparam name="T">Type of message to wait for.</typeparam>
+        /// <typeparam name="TKey">Type of key.</typeparam>
+        /// <typeparam name="TMessage">Type of message to wait for.</typeparam>
         /// <param name="key">Key of message to wait for.</param>
         /// <param name="ct">The cancellation token that will be checked prior to completing the returned task.</param>
-        /// <returns>An instance of message of type <typeparamref name="T"/> when message is received.</returns>
-        public Task<T> GetMessageAsync<T>(string key, CancellationToken ct)
+        /// <returns>An instance of message of type <typeparamref name="TMessage"/> when message is received.</returns>
+        public Task<TMessage> GetMessageAsync<TKey, TMessage>(TKey key, CancellationToken ct)
         {
-            var tcs = new TaskCompletionSource<T>();
+            var tcs = new TaskCompletionSource<TMessage>();
             Subscription subscription = null;
-            Action<string, T> handler = (k, m) =>
+            Action<TKey, TMessage> handler = (k, m) =>
             {
                 subscription.Dispose();
                 tcs.TrySetResult(m);
@@ -118,6 +140,16 @@ namespace Righthand.MessageBus
             });
             subscription = Subscribe(key, handler);
             return tcs.Task;
+        }
+        /// <summary>
+        /// Waits asynchronously for a message of type <typeparamref name="TMessage"/> with any key.
+        /// </summary>
+        /// <typeparam name="TMessage">Type of message to wait for.</typeparam>
+        /// <param name="ct">The cancellation token that will be checked prior to completing the returned task.</param>
+        /// <returns>An instance of message of type <typeparamref name="TMessage"/> when message is received.</returns>
+        public Task<TMessage> GetMessageAsync<TMessage>(CancellationToken ct)
+        {
+            return GetMessageAsync<object, TMessage>(null, ct);
         }
         /// <summary>
         /// Disposes the dispatcher.

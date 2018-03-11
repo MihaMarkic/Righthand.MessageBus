@@ -25,6 +25,17 @@ class Derived: Root {}
 If subscriber subscribes to Root type, it will receive messages when published message are either Root or Derived type.
 
 If subscriber subscribes to Derived type, it will receive only Derived type messages.
+
+## History
+
+1.1.0
+
+- Makes key a generic type, was string previously
+
+1.0.0
+
+* First version
+
 ## How to use
 To dispatch a message.
 ```csharp
@@ -48,19 +59,19 @@ class Program
     {
         using (IDispatcher dispatcher = new Dispatcher())
         {
-            using (dispatcher.Subscribe<string>(null, AnyKeyMessageReceived)) // will receive any message with string type regardless of the key
-            using (dispatcher.Subscribe<string>("some_key", KeyMessageReceived)) // will receive any message with string type where the key is the same
+            using (dispatcher.Subscribe<string>(AnyKeyMessageReceived)) // will receive any message with string type regardless of the key
+            using (dispatcher.Subscribe<string, string>("some_key", KeyMessageReceived)) // will receive any message with string type where the key is the same
             {
-                dispatcher.Dispatch(null, "A message without key");
+                dispatcher.Dispatch("A message without key");
                 dispatcher.Dispatch("some_key", "A message with key");
             }
-            dispatcher.Dispatch(null, "After subscribers disposed, a message without key"); // won't receive this message since subscribers have been disposed
+            dispatcher.Dispatch("After subscribers disposed, a message without key"); // won't receive this message since subscribers have been disposed
         }
         Console.WriteLine("Press ENTER to exit");
         Console.ReadLine();
     }
 
-    static void AnyKeyMessageReceived(string key, string content)
+    static void AnyKeyMessageReceived(object key, string content)
     {
         Console.WriteLine($"[no key required] Got message '{content}' with key '{key}'");
     }
@@ -92,7 +103,7 @@ async Task SelectItemAsync()
     var dialog = new ItemSelectorDialogFragment();
     dialog.Show(FragmentManager, "xy");
     // result is published through dispatcher
-    var message = await Globals.Dispatcher.GetMessageAsync<ItemSelectedMessage>(null, CancellationToken.None);
+    var message = await Globals.Dispatcher.GetMessageAsync<ItemSelectedMessage>(CancellationToken.None);
     // where global ViewModel instance receives it
     viewModel.SelectedItem = message.Item;
 }

@@ -9,9 +9,9 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-[assembly: global::Android.Runtime.ResourceDesignerAttribute("MessageBus.Android.Sample.Resource", IsApplication=true)]
+[assembly: global::Android.Runtime.ResourceDesignerAttribute("Righthand.MessageBus.Android.Sample.Resource", IsApplication=true)]
 
-namespace MessageBus.Android.Sample
+namespace Righthand.MessageBus.Android.Sample
 {
 	
 	

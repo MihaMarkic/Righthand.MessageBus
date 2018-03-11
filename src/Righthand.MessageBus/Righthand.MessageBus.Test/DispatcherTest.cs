@@ -27,7 +27,7 @@ namespace Righthand.MessageBus.Test
             [Test]
             public void WhenSubscriptionAdded_ItIsOnlyOneReturned()
             {
-                var subscription = target.Subscribe<object>("key", (k, m) => { });
+                var subscription = target.Subscribe<string, object>("key", (k, m) => { });
 
                 var actual = target.GetAllSubscriptions();
 
@@ -36,7 +36,7 @@ namespace Righthand.MessageBus.Test
             [Test]
             public void WhenSubscriptionIsRemoved_NoEntries()
             {
-                var subscription = target.Subscribe<object>("key", (k, m) => { });
+                var subscription = target.Subscribe<string, object>("key", (k, m) => { });
                 subscription.Dispose();
 
                 var actual = target.GetAllSubscriptions();
@@ -53,9 +53,9 @@ namespace Righthand.MessageBus.Test
             [TestCase(null, "two", ExpectedResult = true)]
             [TestCase("one", "two", ExpectedResult = false)]
             [TestCase("one", "one", ExpectedResult = true)]
-            public bool WhenRootTypeInvokedOnRootSubscription_ReturnsCorrectValue(string subscriptionKey, string dispatchKey)
+            public bool WhenRootTypeInvokedOnRootSubscriptionWithStringKey_ReturnsCorrectValue(string subscriptionKey, string dispatchKey)
             {
-                var actual = Dispatcher.GetActionIfMatches<Root>(target.Subscribe<Root>(subscriptionKey, (k, m) => { }), dispatchKey);
+                var actual = Dispatcher.GetActionIfMatches<string, Root>(target.Subscribe<string, Root>(subscriptionKey, (k, m) => { }), dispatchKey);
 
                 return actual != null;
             }
@@ -64,9 +64,9 @@ namespace Righthand.MessageBus.Test
             [TestCase(null, "two", ExpectedResult = true)]
             [TestCase("one", "two", ExpectedResult = false)]
             [TestCase("one", "one", ExpectedResult = true)]
-            public bool WhenDerivedTypeInvokedOnRootSubscription_ReturnsCorrectValue(string subscriptionKey, string dispatchKey)
+            public bool WhenDerivedTypeInvokedOnRootSubscriptionWithStringKey_ReturnsCorrectValue(string subscriptionKey, string dispatchKey)
             {
-                var actual = Dispatcher.GetActionIfMatches<Derived>(target.Subscribe<Root>(subscriptionKey, (k, m) => { }), dispatchKey);
+                var actual = Dispatcher.GetActionIfMatches<string, Derived>(target.Subscribe<string, Root>(subscriptionKey, (k, m) => { }), dispatchKey);
 
                 return actual != null;
             }
@@ -75,9 +75,9 @@ namespace Righthand.MessageBus.Test
             [TestCase(null, "two")]
             [TestCase("one", "two")]
             [TestCase("one", "one")]
-            public void WhenRootTypeInvokedOnDerivedSubscription_ReturnsNull(string subscriptionKey, string dispatchKey)
+            public void WhenRootTypeInvokedOnDerivedSubscriptionWithStringKey_ReturnsNull(string subscriptionKey, string dispatchKey)
             {
-                var actual = Dispatcher.GetActionIfMatches<Root>(target.Subscribe<Derived>(subscriptionKey, (k, m) => { }), dispatchKey);
+                var actual = Dispatcher.GetActionIfMatches<string, Root>(target.Subscribe<string, Derived>(subscriptionKey, (k, m) => { }), dispatchKey);
 
                 Assert.That(actual, Is.Null);
             }
@@ -86,9 +86,9 @@ namespace Righthand.MessageBus.Test
             [TestCase(null, "two")]
             [TestCase("one", "two")]
             [TestCase("one", "one")]
-            public void WhenDerivedTypeInvokedOnAnotherDerivedSubscription_ReturnsNull(string subscriptionKey, string dispatchKey)
+            public void WhenDerivedTypeInvokedOnAnotherDerivedSubscriptionWithStringKey_ReturnsNull(string subscriptionKey, string dispatchKey)
             {
-                var actual = Dispatcher.GetActionIfMatches<Derived>(target.Subscribe<AnotherDerived>(subscriptionKey, (k, m) => { }), dispatchKey);
+                var actual = Dispatcher.GetActionIfMatches<string, Derived>(target.Subscribe<string, AnotherDerived>(subscriptionKey, (k, m) => { }), dispatchKey);
 
                 Assert.That(actual, Is.Null);
             }
@@ -97,11 +97,30 @@ namespace Righthand.MessageBus.Test
             [TestCase(null, "two")]
             [TestCase("one", "two")]
             [TestCase("one", "one")]
-            public void WhenAnotherDerivedTypeInvokedOnDerivedSubscription_ReturnsNull(string subscriptionKey, string dispatchKey)
+            public void WhenAnotherDerivedTypeInvokedOnDerivedSubscriptionWithStringKey_ReturnsNull(string subscriptionKey, string dispatchKey)
             {
-                var actual = Dispatcher.GetActionIfMatches<AnotherDerived>(target.Subscribe<Derived>(subscriptionKey, (k, m) => { }), dispatchKey);
+                var actual = Dispatcher.GetActionIfMatches<string, AnotherDerived>(target.Subscribe<string, Derived>(subscriptionKey, (k, m) => { }), dispatchKey);
 
                 Assert.That(actual, Is.Null);
+            }
+            [TestCase(null, null, ExpectedResult = true)]
+            [TestCase(TestEnumKey.One, null, ExpectedResult = false)]
+            [TestCase(null, TestEnumKey.Two, ExpectedResult = true)]
+            [TestCase(TestEnumKey.One, TestEnumKey.Two, ExpectedResult = false)]
+            [TestCase(TestEnumKey.One, TestEnumKey.One, ExpectedResult = true)]
+            public bool WhenRootTypeInvokedOnRootSubscriptionWitNullableEnumKey_ReturnsCorrectValue(TestEnumKey? subscriptionKey, TestEnumKey? dispatchKey)
+            {
+                var actual = Dispatcher.GetActionIfMatches<TestEnumKey?, Root>(target.Subscribe<TestEnumKey?, Root>(subscriptionKey, (k, m) => { }), dispatchKey);
+
+                return actual != null;
+            }
+            [TestCase(TestEnumKey.One, TestEnumKey.Two, ExpectedResult = false)]
+            [TestCase(TestEnumKey.One, TestEnumKey.One, ExpectedResult = true)]
+            public bool WhenRootTypeInvokedOnRootSubscriptionWitEnumKey_ReturnsCorrectValue(TestEnumKey subscriptionKey, TestEnumKey dispatchKey)
+            {
+                var actual = Dispatcher.GetActionIfMatches<TestEnumKey, Root>(target.Subscribe<TestEnumKey, Root>(subscriptionKey, (k, m) => { }), dispatchKey);
+
+                return actual != null;
             }
         }
 
@@ -111,14 +130,14 @@ namespace Righthand.MessageBus.Test
             [Test]
             public void WhenNameIsNull_SubscriptionHasNullName()
             {
-                var actual = target.Subscribe<Root>(null, (k, m) => { });
+                var actual = target.Subscribe<string, Root>(null, (k, m) => { });
 
                 Assert.That(actual.Name, Is.Null);
             }
             [Test]
             public void WhenNameIsNotNull_SubscriptionHasName()
             {
-                var actual = target.Subscribe<Root>(null, (k, m) => { }, name: "SubscriptionName");
+                var actual = target.Subscribe<string, Root>(null, (k, m) => { }, name: "SubscriptionName");
 
                 Assert.That(actual.Name, Is.EqualTo("SubscriptionName"));
             }
@@ -204,7 +223,7 @@ namespace Righthand.MessageBus.Test
                 where TDispatch: new()
             {
                 bool subscriptionCalled = false;
-                var subscription = target.Subscribe<TSubscription>(subscriptionKey, (k, r) => { subscriptionCalled = true; });
+                var subscription = target.Subscribe<string, TSubscription>(subscriptionKey, (k, r) => { subscriptionCalled = true; });
 
                 target.Dispatch(dispatchKey, new TDispatch());
 
@@ -214,18 +233,18 @@ namespace Righthand.MessageBus.Test
             Invocation[] DoMixedDispatch<T>(string key, T message)
             {
                 var called = new List<Invocation>();
-                target.Subscribe<Root>(null, (k, r) => { called.Add(new Invocation(typeof(Root), null)); });
-                target.Subscribe<Root>(GetKey<Root>(), (k, r) => { called.Add(new Invocation(typeof(Root), 0)); });
-                target.Subscribe<Root>(GetAlternateKey<Root>(), (k, r) => { called.Add(new Invocation(typeof(Root), 1)); });
-                target.Subscribe<Derived>(null, (k, r) => { called.Add(new Invocation(typeof(Derived), null)); });
-                target.Subscribe<Derived>(GetKey<Derived>(), (k, r) => { called.Add(new Invocation(typeof(Derived), 0)); });
-                target.Subscribe<Derived>(GetAlternateKey<Derived>(), (k, r) => { called.Add(new Invocation(typeof(Derived), 1)); });
-                target.Subscribe<AnotherDerived>(null, (k, r) => { called.Add(new Invocation(typeof(AnotherDerived), null)); });
-                target.Subscribe<AnotherDerived>(GetKey<AnotherDerived>(), (k, r) => { called.Add(new Invocation(typeof(AnotherDerived), 0)); });
-                target.Subscribe<AnotherDerived>(GetAlternateKey<AnotherDerived>(), (k, r) => { called.Add(new Invocation(typeof(AnotherDerived), 1)); });
-                target.Subscribe<Another>(null, (k, r) => { called.Add(new Invocation(typeof(Another), null)); });
-                target.Subscribe<Another>(GetKey<Another>(), (k, r) => { called.Add(new Invocation(typeof(Another), 0)); });
-                target.Subscribe<Another>(GetAlternateKey<Another>(), (k, r) => { called.Add(new Invocation(typeof(Another), 1)); });
+                target.Subscribe<string, Root>(null, (k, r) => { called.Add(new Invocation(typeof(Root), null)); });
+                target.Subscribe<string, Root>(GetKey<Root>(), (k, r) => { called.Add(new Invocation(typeof(Root), 0)); });
+                target.Subscribe<string, Root>(GetAlternateKey<Root>(), (k, r) => { called.Add(new Invocation(typeof(Root), 1)); });
+                target.Subscribe<string, Derived>(null, (k, r) => { called.Add(new Invocation(typeof(Derived), null)); });
+                target.Subscribe<string, Derived>(GetKey<Derived>(), (k, r) => { called.Add(new Invocation(typeof(Derived), 0)); });
+                target.Subscribe<string, Derived>(GetAlternateKey<Derived>(), (k, r) => { called.Add(new Invocation(typeof(Derived), 1)); });
+                target.Subscribe<string, AnotherDerived>(null, (k, r) => { called.Add(new Invocation(typeof(AnotherDerived), null)); });
+                target.Subscribe<string, AnotherDerived>(GetKey<AnotherDerived>(), (k, r) => { called.Add(new Invocation(typeof(AnotherDerived), 0)); });
+                target.Subscribe<string, AnotherDerived>(GetAlternateKey<AnotherDerived>(), (k, r) => { called.Add(new Invocation(typeof(AnotherDerived), 1)); });
+                target.Subscribe<string, Another>(null, (k, r) => { called.Add(new Invocation(typeof(Another), null)); });
+                target.Subscribe<string, Another>(GetKey<Another>(), (k, r) => { called.Add(new Invocation(typeof(Another), 0)); });
+                target.Subscribe<string, Another>(GetAlternateKey<Another>(), (k, r) => { called.Add(new Invocation(typeof(Another), 1)); });
 
                 target.Dispatch(key, message);
 
@@ -259,5 +278,12 @@ namespace Righthand.MessageBus.Test
         public class Derived : Root { }
         public class AnotherDerived : Root { }
         public class Another { }
+
+        public enum TestEnumKey
+        {
+            One,
+            Two,
+            Three
+        }
     }
 }
