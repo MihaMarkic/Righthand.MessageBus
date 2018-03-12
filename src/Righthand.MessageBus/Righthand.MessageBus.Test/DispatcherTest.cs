@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Righthand.MessageBus.Test
 {
@@ -42,6 +44,50 @@ namespace Righthand.MessageBus.Test
                 var actual = target.GetAllSubscriptions();
 
                 Assert.That(actual, Is.Empty);
+            }
+        }
+        [TestFixture]
+        public class GetMessageAsync: DispatcherTest
+        {
+            [Test]
+            public void WhenStartingAwait_SubscriptionIsAdded()
+            {
+                var task = target.GetMessageAsync<object>(CancellationToken.None);
+
+                Assert.That(target.GetAllSubscriptions().Length, Is.EqualTo(1));
+            }
+            [Test]
+            public async Task AfterMessagePublished_SubscriptionsIsEmpty()
+            {
+                var task = target.GetMessageAsync<object>(CancellationToken.None);
+                target.Dispatch(new object());
+                await task;
+
+                Assert.That(target.GetAllSubscriptions().Length, Is.EqualTo(0));
+            }
+            [Test]
+            public async Task AfterMessageIsCancelled_SubscriptionsIsEmpty()
+            {
+                var cts = new CancellationTokenSource();
+                var task = target.GetMessageAsync<object>(cts.Token);
+                cts.Cancel();
+                try
+                {
+                    await task;
+                }
+                catch (OperationCanceledException)
+                {}
+
+                Assert.That(target.GetAllSubscriptions().Length, Is.EqualTo(0));
+            }
+
+            [Test]
+            public async Task AfterMessageIsCancelled_TaskCancelledExceptionIsThrown()
+            {
+                var cts = new CancellationTokenSource();
+                var task = target.GetMessageAsync<object>(cts.Token);
+                cts.Cancel();
+                Assert.ThrowsAsync<TaskCanceledException>(() => task);
             }
         }
 
