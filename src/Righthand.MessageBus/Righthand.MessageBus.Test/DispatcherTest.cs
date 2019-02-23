@@ -299,6 +299,23 @@ namespace Righthand.MessageBus.Test
             string GetKey<T>() => typeof(T).Name;
             string GetAlternateKey<T>() => typeof(T).Name + "2";
         }
+
+        [TestFixture]
+        public class Dispose: DispatcherTest
+        {
+            [Test]
+            public void WhenNoSubscriptions_DisposeDoesNotProduceException()
+            {
+                target.Dispose();
+            }
+            [Test]
+            public void WhenSubscriptionIsPresent_DisposeDoesNotProduceException()
+            {
+                target.Subscribe<string, object>("key", (k, o) => { });
+                target.Dispose();
+            }
+        }
+
         [DebuggerDisplay("{Type.Name,nq} with key {Key}")]
         public struct Invocation
         {

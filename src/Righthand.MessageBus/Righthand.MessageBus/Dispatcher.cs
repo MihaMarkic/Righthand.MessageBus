@@ -161,7 +161,7 @@ namespace Righthand.MessageBus
                 isDisposed = true;
                 lock (sync)
                 {
-                    for (int i = subscriptions.Count-1; i >= 0; i++)
+                    for (int i = subscriptions.Count-1; i >= 0; i--)
                     {
                         subscriptions[i].Dispose();
                     }
