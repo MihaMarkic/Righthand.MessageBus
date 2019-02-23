@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net45</TargetFrameworks>
@@ -15,8 +15,8 @@
     <PackageTags>message-bus</PackageTags>
     <IncludeSymbols>true</IncludeSymbols>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
-    <Version>1.1.1</Version>
-    <Copyright>2018, Righthand, Miha Markic</Copyright>
+    <Version>1.1.2</Version>
+    <Copyright>2018-2019, Righthand, Miha Markic</Copyright>
     <!--<PackageIconUrl></PackageIconUrl>-->
   </PropertyGroup>
   <PropertyGroup>
