@@ -30,6 +30,10 @@ Supports .NET Standard 2.0 target.
 
 ## History
 
+1.2.0
+
+- Adds net6 support
+
 1.1.0
 
 - Makes key a generic type, was string previously
