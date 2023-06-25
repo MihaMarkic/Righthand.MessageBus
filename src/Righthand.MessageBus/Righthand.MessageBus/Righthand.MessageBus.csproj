@@ -1,28 +1,55 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net45;net6</TargetFrameworks>
+    <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <PropertyGroup>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageId>Righthand.MessageBus</PackageId>
     <Authors>Miha Markic</Authors>
+    <Owners>Miha Markic</Owners>
     <Company>Righthand</Company>
     <Description>A very simple message bus implementation.</Description>
     <PackageProjectUrl>https://github.com/MihaMarkic/Righthand.MessageBus</PackageProjectUrl>
-    <PackageLicenseUrl>https://github.com/MihaMarkic/Righthand.MessageBus/blob/master/LICENSE</PackageLicenseUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/MihaMarkic/Righthand.MessageBus.git</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>message-bus</PackageTags>
-    <IncludeSymbols>true</IncludeSymbols>
-    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
-    <Version>1.1.2</Version>
-    <Copyright>2018-2019, Righthand, Miha Markic</Copyright>
+    <Version>2.0.0-beta.4</Version>
+    <Copyright>2018-2023, Righthand, Miha Markic</Copyright>
     <!--<PackageIconUrl></PackageIconUrl>-->
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
+  <Choose>
+    <When Condition=" '$(Configuration)'=='Release' ">
+      <PropertyGroup>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+      </PropertyGroup>
+    </When>
+  </Choose>
   <PropertyGroup>
-    <DocumentationFile>bin\Release\netstandard2.0\Righthand.MessageBus.xml</DocumentationFile>
+    <DocumentationFile>bin\Release\net6\Righthand.MessageBus.xml</DocumentationFile>
+    <GenerateDocumentationFile>False</GenerateDocumentationFile>
+    <RepositoryUrl>https://github.com/MihaMarkic/Righthand.MessageBus</RepositoryUrl>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DocumentationFile>bin\Release\netstandard2.0\Righthand.MessageBus.xml</DocumentationFile>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <DocumentationFile>bin\Release\net6.0\Righthand.MessageBus.xml</DocumentationFile>
   </PropertyGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>$(AssemblyName).Test</_Parameter1>
+      <!-- We use the value of AssemblyName to declare the value of the attribute -->
+    </AssemblyAttribute>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
 </Project>

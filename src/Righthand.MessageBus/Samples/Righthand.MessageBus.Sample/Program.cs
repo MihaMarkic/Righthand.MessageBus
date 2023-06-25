@@ -20,9 +20,9 @@ namespace Righthand.MessageBus.Sample
             Console.ReadLine();
         }
 
-        static void AnyKeyMessageReceived(object key, string content)
+        static void AnyKeyMessageReceived(string content)
         {
-            Console.WriteLine($"[no key required] Got message '{content}' with key '{key}'");
+            Console.WriteLine($"[no key required] Got message '{content}'");
         }
         static void KeyMessageReceived(string key, string content)
         {

@@ -2,33 +2,65 @@
 
 [![NuGet](https://img.shields.io/nuget/v/Righthand.MessageBus.svg)](https://www.nuget.org/packages/Righthand.MessageBus)
 
+## About
+
 An open source library that provides support for a very simple message bus with subscribe/publish model.
 
-Dispatcher class is thread safe, others are not.
+Dispatcher and public classes are thread safe, others are not necessarily.
 Subscriber instance returned from Dispatcher.Subscribe<T>(...) has to be disposed to unsubscribe from Dispatcher.
 
 Subscribers gets messages based on published key and message type:
-- when subscriber doesn't use key, all keys are valid
-- when subscriber specifies a key, only same keys are valid
+- when subscriber doesn't use a key, all keys are valid
+- when subscriber specifies a key, only specified keys are valid
 
 and
 
-- subscriber recieves only message types of given requested type or its subclasses
+- subscriber receives only message types of given requested type but not of its subclasses (the later is a breaking change in version 2.x)
 
-Let's say we have this class hierarchy:
+Subscription can be handled through synchronous (`Action<TMessage> or Action<TKey, TMessage>`{:.csharp}) or asynchronous methods (`Func<TMessage, CancellationToken, Task> or Func<TKey, TMessage, CancellationToken, Task>`{:.csharp}).
+
+Let's say we have this message class hierarchy:
 
 ```csharp
 class Root {}
 class Derived: Root {}
 ```
 
-If subscriber subscribes to Root type, it will receive messages when published message are either Root or Derived type.
+If subscriber subscribes to Root type, it will receive messages when published message is `Root` but not `Derived` type.
 
-If subscriber subscribes to Derived type, it will receive only Derived type messages.
+If subscriber subscribes to `Derived` type, it will receive only `Derived` type messages.
 
-Supports .NET Standard 2.0 target.
+Handling message type hierarchies (i.e. when subscribed to `Root` subscription would handle both `Derived` and `Root` messages) introduces performance penalty and isn't worth an effort at this time.
+
+Dispatch handles subscriptions sequentially and doesn't provide any error handling. Thus if one of handlers throws an unhandled exception, subscriptions in queue won't get the message. Make sure handlers don't throw if this in an undesired effect.
+
+There are two types of dispatch:
+- synchronous `Dispatch<TKey, TMessage>` and `Dispatch<TMessage>`
+- asynchronous `DispatchAsync<TKey, TMessage>` and `DispatchAsync<TMessage>`
+
+The important difference between the two is that the later can wait for all subscriptions to finish (await the `Task` result), while the former starts asynchronous subscriptions but doesn't wait for them to finish.
+
+Supports .NET 6.0 and later.
+
+## How to compile
+
+Simple `dotnet build -c Release` in `src\Righthand.MessageBus` directory.
+
+## Where to get
+
+[nuget](https://www.nuget.org/packages/Righthand.MessageBus/)
 
 ## History
+
+2.0.0
+
+- Rewritten
+- Improved performances
+- Omits support for catching super types (breaking change)
+- Drops support for .NET standard and framework
+- Supports async subscriptions (handler method has to be `Func<TKey, TMessage, CancellationToken, Task>` or `Func<TMessage, CancellationToken, Task>` when key is ignored, async dispatch through `DispatchAsync` method and awaiting for async message through `GetAsyncMessageAsync` method.
+- Sync counterparts are message handler of either `Action<TKey, TMessage>` or `Action<TMessage>` type, `Dispatch` and `GetSyncMessageAsync`
+- Removes Android sample for the time being.
 
 1.2.0
 
@@ -45,15 +77,23 @@ Supports .NET Standard 2.0 target.
 ## How to use
 To dispatch a message.
 ```csharp
-void Dispatch<T>(string key, T message);
+void Dispatch<TKey, TMessage>(TKey key, TMessage message);
+void Dispatch<TMessage>(TMessage message);
+// or with an option to wait for all subscriptions to finish
+Task DispatchAsync<TKey, TMessage>(TKey key, TMessage message, CancellationToken ct);
+Task DispatchAsync<TMessage>(TMessage message, CancellationToken ct);
 ```
 To subscribe to a message.
 ```csharp
-Subscription Subscribe<T>(string key, Action<string, T> handler, string name = null);
+Subscription Subscribe<TKey, TMessage>(TKey key, Action<string, TMessage> handler, string name = null);
+Subscription Subscribe<TMessage>(Action<TKey, TMessage> handler, string name = null);
+Subscription Subscribe<TKey, TMessage>(TKey key, Action<string, TMessage> handler, string name = null);
+Subscription Subscribe<TMessage>(Action<TKey, TMessage> handler, string name = null);
 ```
-To asynchronously wait for a message.
+To asynchronously wait for a message without an explicit subscriptions (one is created in code behind implicitly and disposed after method finishes).
 ```csharp
-Task<T> GetMessageAsync<T>(string key, CancellationToken ct);
+Task<TMessage> GetMessageAsync<TKey, TMessage>(TKey key, CancellationToken ct);
+Task<TMessage> GetMessageAsync<TMessage>(CancellationToken ct);
 ```
 
 ## Sample code
@@ -77,9 +117,9 @@ class Program
         Console.ReadLine();
     }
 
-    static void AnyKeyMessageReceived(object key, string content)
+    static void AnyKeyMessageReceived(string content)
     {
-        Console.WriteLine($"[no key required] Got message '{content}' with key '{key}'");
+        Console.WriteLine($"[no key required] Got message '{content}'");
     }
     static void KeyMessageReceived(string key, string content)
     {
@@ -93,24 +133,3 @@ class Program
 ### Righthand.MessageBus.Sample
 
 A minimal sample demonstrating dispatching and subscriptions. The sample code above is taken from this sample.
-
-### Righthand.MessageBus.Android.Sample
-
-A sample that demonstrates how to handle dialog fragments. It gets interesting when dialog is show,
-activity goes into background and is destroyed to be later recreated when getting back into foreground.
-Most similar code will misbehave it such situations.
-
-The sample would work correctly because it is publishing message to a global dispatcher when item is selected.
-Excerpt that shows dialog and sets ViewModel.SelectedItem accordingly.
-
-```csharp
-async Task SelectItemAsync()
-{
-    var dialog = new ItemSelectorDialogFragment();
-    dialog.Show(FragmentManager, "xy");
-    // result is published through dispatcher
-    var message = await Globals.Dispatcher.GetMessageAsync<ItemSelectedMessage>(CancellationToken.None);
-    // where global ViewModel instance receives it
-    viewModel.SelectedItem = message.Item;
-}
-```
