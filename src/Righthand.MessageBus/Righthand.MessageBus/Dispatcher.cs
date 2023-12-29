@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Nito.AsyncEx;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -19,7 +20,7 @@ namespace Righthand.MessageBus
         /// </summary>
         /// <remarks>Access should be protected with <see cref="sync"/>.</remarks>
         readonly Dictionary<Type, Subscriptions> subscriptions = new Dictionary<Type, Subscriptions>();
-        readonly ReaderWriterLockSlim sync = new ReaderWriterLockSlim();
+        readonly AsyncReaderWriterLock sync = new AsyncReaderWriterLock();
         /// <summary>
         /// 
         /// </summary>
@@ -32,20 +33,18 @@ namespace Righthand.MessageBus
             {
                 throw new ObjectDisposedException(nameof(Dispatcher));
             }
-            sync.EnterReadLock();
-            try
+            using (sync.ReaderLock())
             {
-                await DispatchCoreAsync(key, message, ct).ConfigureAwait(false);
-                // dispatches to non async handlers
-                DispatchCore(key, message);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Unhandled exception {ex.Message} during invoking subscription of type {typeof(Func<TKey, TMessage>)}");
-            }
-            finally
-            {
-                sync.ExitReadLock();
+                try
+                {
+                    await DispatchCoreAsync(key, message, ct).ConfigureAwait(false);
+                    // dispatches to non async handlers
+                    DispatchCore(key, message);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Unhandled exception {ex.Message} during invoking subscription of type {typeof(Func<TKey, TMessage>)}");
+                }
             }
         }
         internal async Task DispatchCoreAsync<TKey, TMessage>(TKey key, TMessage message, CancellationToken ct = default)
@@ -67,20 +66,18 @@ namespace Righthand.MessageBus
             {
                 throw new ObjectDisposedException(nameof(Dispatcher));
             }
-            sync.EnterReadLock();
-            try
+            using (sync.ReaderLock())
             {
-                await DispatchCoreAsync(message, ct).ConfigureAwait(false);
-                // dispatches to non async handlers
-                DispatchCore(message);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Unhandled exception {ex.Message} during invoking subscription of type {typeof(Func<TMessage>)}");
-            }
-            finally 
-            { 
-                sync.ExitReadLock(); 
+                try
+                {
+                    await DispatchCoreAsync(message, ct).ConfigureAwait(false);
+                    // dispatches to non async handlers
+                    DispatchCore(message);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Unhandled exception {ex.Message} during invoking subscription of type {typeof(Func<TMessage>)}");
+                }
             }
         }
         /// <inheritdoc/>
@@ -98,20 +95,18 @@ namespace Righthand.MessageBus
             {
                 throw new ObjectDisposedException(nameof(Dispatcher));
             }
-            sync.EnterReadLock();
-            try
+            using (sync.ReaderLock())
             {
-                DispatchCore(key, message);
-                // fire & forget for async handlers
-                _ = DispatchCoreAsync(key, message);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Unhandled exception {ex.Message} during invoking subscription of type {typeof(TMessage)}");
-            }
-            finally
-            {
-                sync.ExitReadLock();
+                try
+                {
+                    DispatchCore(key, message);
+                    // fire & forget for async handlers
+                    _ = DispatchCoreAsync(key, message);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Unhandled exception {ex.Message} during invoking subscription of type {typeof(TMessage)}");
+                }
             }
         }
         internal void DispatchCore<TKey, TMessage>(TKey key, TMessage message)
@@ -133,20 +128,18 @@ namespace Righthand.MessageBus
             {
                 throw new ObjectDisposedException(nameof(Dispatcher));
             }
-            sync.EnterReadLock();
-            try
+            using (sync.ReaderLock())
             {
-                DispatchCore(message);
-                // fire & forget for async handlers
-                _ = DispatchCoreAsync(message, false).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Unhandled exception {ex.Message} during invoking subscription of type {typeof(Action<TMessage>)}");
-            }
-            finally
-            {
-                sync.ExitReadLock();
+                try
+                {
+                    DispatchCore(message);
+                    // fire & forget for async handlers
+                    _ = DispatchCoreAsync(message, false).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Unhandled exception {ex.Message} during invoking subscription of type {typeof(Action<TMessage>)}");
+                }
             }
         }
         internal void DispatchCore<TMessage>(TMessage message)
@@ -160,36 +153,31 @@ namespace Righthand.MessageBus
         }
         internal void Subscribe(Type typeKey, ISubscription subscription)
         {
-            sync.EnterUpgradeableReadLock();
-            try
+            using (sync.WriterLock())
             {
                 if (!subscriptions.TryGetValue(typeKey, out var typeSubscriptions))
                 {
-                    sync.EnterWriteLock();
-                    try
+                    //sync.EnterWriteLock();
+                    //try
+                    //{
+                    // needs to check again whether another thread didn't add subscriptions in between
+                    if (!subscriptions.TryGetValue(typeKey, out typeSubscriptions))
                     {
-                        // needs to check again whether another thread didn't add subscriptions in between
-                        if (!subscriptions.TryGetValue(typeKey, out typeSubscriptions))
-                        {
-                            typeSubscriptions = new Subscriptions();
-                            subscriptions.Add(typeKey, typeSubscriptions);
-                        }
+                        typeSubscriptions = new Subscriptions();
+                        subscriptions.Add(typeKey, typeSubscriptions);
                     }
-                    finally
-                    {
-                        sync.ExitWriteLock();
-                    }
+                    //}
+                    //finally
+                    //{
+                    //    sync.ExitWriteLock();
+                    //}
                 }
                 typeSubscriptions.Add(subscription);
-            }
-            finally
-            {
-                sync.ExitUpgradeableReadLock();
             }
         }
         /// <inheritdoc/>
         public ISubscription Subscribe<TKey, TMessage>(TKey key, Func<TKey, TMessage, CancellationToken, Task> handler,
-            string? name = null)
+                string? name = null)
         {
             if (IsDisposed)
             {
@@ -279,17 +267,12 @@ namespace Righthand.MessageBus
         }
         internal int GetSyncSubscriptionsCount(Type typeKey)
         {
-            sync.EnterReadLock();
-            try
+            using (sync.ReaderLock())
             {
                 if (subscriptions.TryGetValue(typeKey, out var typeSubscriptions))
                 {
                     return typeSubscriptions.SubscriptionsCount;
                 }
-            }
-            finally
-            {
-                sync.ExitReadLock();
             }
             return 0;
         }
@@ -334,8 +317,7 @@ namespace Righthand.MessageBus
             {
                 // sets disposed flag
                 Interlocked.Increment(ref isDisposedCounter);
-                sync.EnterWriteLock();
-                try
+                using (sync.WriterLock())
                 {
                     var typeSubscriptions = subscriptions.Values.ToImmutableArray();
                     foreach (var s in typeSubscriptions)
@@ -343,10 +325,6 @@ namespace Righthand.MessageBus
                         s.Dispose();
                     }
                     subscriptions.Clear();
-                }
-                finally
-                {
-                    sync.ExitWriteLock();
                 }
             }
         }

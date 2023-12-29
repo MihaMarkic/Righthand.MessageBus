@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Nito.AsyncEx;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading;
@@ -12,7 +13,7 @@ namespace Righthand.MessageBus
     /// <threadsafety>Somewhat thread safe</threadsafety>
     internal sealed class Subscriptions: IDisposable
     {
-        readonly ReaderWriterLockSlim sync = new ReaderWriterLockSlim();
+        readonly AsyncReaderWriterLock sync = new AsyncReaderWriterLock();
         internal readonly HashSet<ISubscription> subscriptions = new HashSet<ISubscription>();
         /// <remarks>There is a chance that object has been disposed, but sync object has not been yet.</remarks>
         /// <threadsafety>It should be called only within a lock.</threadsafety>
@@ -37,16 +38,11 @@ namespace Righthand.MessageBus
         /// <threadsafety>Thread safe</threadsafety>
         internal Subscriptions Add(ISubscription subscription)
         {
-            sync.EnterWriteLock();
-            try
+            using (sync.WriterLock())
             {
                 CheckDisposed();
                 subscriptions.Add(subscription);
                 subscription.Disposed += Subscription_Disposed;
-            }
-            finally
-            {
-                sync.ExitWriteLock();
             }
             return this;
         }
@@ -55,15 +51,10 @@ namespace Righthand.MessageBus
         {
             if (sender is ISubscription subscription)
             {
-                sync.EnterWriteLock();
-                try
+                using (sync.WriterLock())
                 {
                     CheckDisposed();
                     RemoveSubscription(subscription);
-                }
-                finally
-                {
-                    sync.ExitWriteLock();
                 }
             }
             else
@@ -94,17 +85,12 @@ namespace Righthand.MessageBus
 
         internal IEnumerable<ISubscription> GetSubscriptions()
         {
-            sync.EnterReadLock();
-            try
+            using (sync.ReaderLock())
             {
                 foreach (var s in subscriptions)
                 {
                     yield return s;
                 }
-            }
-            finally
-            {
-                sync.ExitReadLock();
             }
         }
         /// <summary>
@@ -115,14 +101,9 @@ namespace Righthand.MessageBus
         {
             get
             {
-                sync.EnterReadLock();
-                try
+                using (sync.ReaderLock())
                 {
                     return subscriptions.Count;
-                }
-                finally
-                {
-                    sync.ExitReadLock();
                 }
             }
         }
@@ -175,17 +156,12 @@ namespace Righthand.MessageBus
 
         public void Dispose()
         {
-            sync.EnterWriteLock();
-            try
+            using (sync.WriterLock())
             {
                 isDisposed = true;
                 RemoveAllSubscriptions();
             }
-            finally
-            {
-                sync.ExitWriteLock();
-            }
-            sync.Dispose();
+            //sync.Dispose();
         }
     }
 }
