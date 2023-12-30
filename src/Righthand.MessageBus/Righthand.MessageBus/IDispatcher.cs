@@ -16,15 +16,17 @@ namespace Righthand.MessageBus
         /// <typeparam name="TMessage">Type of <paramref name="message"/>.</typeparam>
         /// <param name="key">Associated key. Can be null.</param>
         /// <param name="message">An instance of message being published.</param>
+        /// <param name="context"><see cref="DispatchContext"/> to us. When null, default one is used.</param>
         /// <param name="ct">CancellationToken</param>
-        Task DispatchAsync<TKey, TMessage>(TKey key, TMessage message, CancellationToken ct = default);
+        Task DispatchAsync<TKey, TMessage>(TKey key, TMessage message, DispatchContext? context = null, CancellationToken ct = default);
         /// <summary>
         /// Dispatches the <paramref name="message"/> asynchronously.
         /// </summary>
         /// <typeparam name="TMessage">Type of <paramref name="message"/>.</typeparam>
         /// <param name="message">An instance of message being published.</param>
+        /// <param name="context"><see cref="DispatchContext"/> to us. When null, default one is used.</param>
         /// <param name="ct">CancellationToken</param>
-        Task DispatchAsync<TMessage>(TMessage message, CancellationToken ct = default);
+        Task DispatchAsync<TMessage>(TMessage message, DispatchContext? context = null, CancellationToken ct = default);
         /// <summary>
         /// Dispatches the <paramref name="message"/> with a given <paramref name="key"/>.
         /// </summary>
@@ -32,13 +34,15 @@ namespace Righthand.MessageBus
         /// <typeparam name="TMessage">Type of <paramref name="message"/>.</typeparam>
         /// <param name="key">Associated key. Can be null.</param>
         /// <param name="message">An instance of message being published.</param>
-        void Dispatch<TKey, TMessage>(TKey key, TMessage message);
+        /// <param name="context"><see cref="DispatchContext"/> to us. When null, default one is used.</param>
+        void Dispatch<TKey, TMessage>(TKey key, TMessage message, DispatchContext? context = null);
         /// <summary>
         /// Dispatches the <paramref name="message"/> without a key.
         /// </summary>
         /// <typeparam name="TMessage"></typeparam>
         /// <param name="message"></param>
-        void Dispatch<TMessage>(TMessage message);
+        /// <param name="context"><see cref="DispatchContext"/> to us. When null, default one is used.</param>
+        void Dispatch<TMessage>(TMessage message, DispatchContext? context = null);
         /// <summary>
         /// Subscribes to a message type <typeparamref name="TMessage"/> with a given <paramref name="key"/>.
         /// </summary>

@@ -27,7 +27,8 @@ namespace Righthand.MessageBus
         /// <threadsafety>Thread safe.</threadsafety>
         public bool IsDisposed => Interlocked.CompareExchange(ref isDisposedCounter, 0, 0) > 0;
         /// <inheritdoc/>
-        public async Task DispatchAsync<TKey, TMessage>(TKey key, TMessage message, CancellationToken ct = default)
+        public async Task DispatchAsync<TKey, TMessage>(TKey key, TMessage message, DispatchContext? context = null, 
+            CancellationToken ct = default)
         {
             if (IsDisposed)
             {
@@ -37,7 +38,8 @@ namespace Righthand.MessageBus
             {
                 try
                 {
-                    await DispatchCoreAsync(key, message, ct).ConfigureAwait(false);
+                    var activeContext = context ?? DispatchContext.Default;
+                    await DispatchCoreAsync(key, message, activeContext, ct).ConfigureAwait(activeContext.ConfigureAwait);
                     // dispatches to non async handlers
                     DispatchCore(key, message);
                 }
@@ -47,20 +49,21 @@ namespace Righthand.MessageBus
                 }
             }
         }
-        internal async Task DispatchCoreAsync<TKey, TMessage>(TKey key, TMessage message, CancellationToken ct = default)
+        internal async Task DispatchCoreAsync<TKey, TMessage>(TKey key, TMessage message, DispatchContext context,
+            CancellationToken ct = default)
         {
             if (subscriptions.TryGetValue(typeof(Func<TKey, TMessage, CancellationToken, Task>), out var typeKeyedSubscriptions))
             {
-                await typeKeyedSubscriptions.DispatchAsync(key, message, ct).ConfigureAwait(false);
+                await typeKeyedSubscriptions.DispatchAsync(key, message, ct).ConfigureAwait(context.ConfigureAwait);
             }
             // dispatches also to keyless subscriptions with the same message type
             if (subscriptions.TryGetValue(typeof(Func<TMessage, CancellationToken, Task>), out var typeSubscriptions))
             {
-                await typeSubscriptions.DispatchAsync(message, ct).ConfigureAwait(false);
+                await typeSubscriptions.DispatchAsync(message, ct).ConfigureAwait(context.ConfigureAwait);
             }
         }
         /// <inheritdoc/>
-        public async Task DispatchAsync<TMessage>(TMessage message, CancellationToken ct = default)
+        public async Task DispatchAsync<TMessage>(TMessage message, DispatchContext? context = null, CancellationToken ct = default)
         {
             if (IsDisposed)
             {
@@ -70,7 +73,8 @@ namespace Righthand.MessageBus
             {
                 try
                 {
-                    await DispatchCoreAsync(message, ct).ConfigureAwait(false);
+                    var activeContext = context ?? DispatchContext.Default;
+                    await DispatchCoreAsync(message, activeContext, ct).ConfigureAwait(activeContext.ConfigureAwait);
                     // dispatches to non async handlers
                     DispatchCore(message);
                 }
@@ -81,15 +85,15 @@ namespace Righthand.MessageBus
             }
         }
         /// <inheritdoc/>
-        public async Task DispatchCoreAsync<TMessage>(TMessage message, CancellationToken ct = default)
+        public async Task DispatchCoreAsync<TMessage>(TMessage message, DispatchContext context, CancellationToken ct = default)
         {
             if (subscriptions.TryGetValue(typeof(Func<TMessage, CancellationToken, Task>), out var typeSubscriptions))
             {
-                await typeSubscriptions.DispatchAsync(message, ct).ConfigureAwait(false);
+                await typeSubscriptions.DispatchAsync(message, ct).ConfigureAwait(context.ConfigureAwait);
             }
         }
         /// <inheritdoc/>
-        public void Dispatch<TKey, TMessage>(TKey key, TMessage message)
+        public void Dispatch<TKey, TMessage>(TKey key, TMessage message, DispatchContext? context = null)
         {
             if (IsDisposed)
             {
@@ -101,7 +105,7 @@ namespace Righthand.MessageBus
                 {
                     DispatchCore(key, message);
                     // fire & forget for async handlers
-                    _ = DispatchCoreAsync(key, message);
+                    _ = DispatchCoreAsync(key, message, context ?? DispatchContext.Default);
                 }
                 catch (Exception ex)
                 {
@@ -122,7 +126,7 @@ namespace Righthand.MessageBus
             }
         }
         /// <inheritdoc/>
-        public void Dispatch<TMessage>(TMessage message)
+        public void Dispatch<TMessage>(TMessage message, DispatchContext? context = null)
         {
             if (IsDisposed)
             {
@@ -133,8 +137,9 @@ namespace Righthand.MessageBus
                 try
                 {
                     DispatchCore(message);
+                    var activeContext = context ?? DispatchContext.Default;
                     // fire & forget for async handlers
-                    _ = DispatchCoreAsync(message, false).ConfigureAwait(false);
+                    _ = DispatchCoreAsync(message, false, activeContext).ConfigureAwait(activeContext.ConfigureAwait);
                 }
                 catch (Exception ex)
                 {
