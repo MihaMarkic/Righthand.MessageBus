@@ -26,6 +26,26 @@ namespace Righthand.MessageBus
         /// </summary>
         /// <threadsafety>Thread safe.</threadsafety>
         public bool IsDisposed => Interlocked.CompareExchange(ref isDisposedCounter, 0, 0) > 0;
+        /// <summary>
+        /// Default <see cref="DispatchContext"/> with Dispatch methods when no explict is passed as an argument.
+        /// </summary>
+        public DispatchContext DefaultDispatchContext { get; }
+        /// <summary>
+        /// Creates a <see cref="Dispatcher"/> instance using default value for <see cref="DispatchContext"/>.
+        /// </summary>
+        public Dispatcher(): this(DispatchContext.Default)
+        {}
+        /// <summary>
+        /// Creates a <see cref="Dispatcher"/> instance using given <paramref name="defaultDispatchContext"/> as default.
+        /// </summary>
+        /// <param name="defaultDispatchContext">
+        /// Default <see cref="DispatchContext"/> to use. Default value is <see cref="DispatchContext.Default"/>
+        /// when null.
+        /// </param>
+        public Dispatcher(DispatchContext defaultDispatchContext)
+        {
+            DefaultDispatchContext = DispatchContext.Default;
+        }
         /// <inheritdoc/>
         public async Task DispatchAsync<TKey, TMessage>(TKey key, TMessage message, DispatchContext? context = null, 
             CancellationToken ct = default)
@@ -38,7 +58,7 @@ namespace Righthand.MessageBus
             {
                 try
                 {
-                    var activeContext = context ?? DispatchContext.Default;
+                    var activeContext = context ?? DefaultDispatchContext;
                     await DispatchCoreAsync(key, message, activeContext, ct).ConfigureAwait(activeContext.ConfigureAwait);
                     // dispatches to non async handlers
                     DispatchCore(key, message);
@@ -73,7 +93,7 @@ namespace Righthand.MessageBus
             {
                 try
                 {
-                    var activeContext = context ?? DispatchContext.Default;
+                    var activeContext = context ?? DefaultDispatchContext;
                     await DispatchCoreAsync(message, activeContext, ct).ConfigureAwait(activeContext.ConfigureAwait);
                     // dispatches to non async handlers
                     DispatchCore(message);
@@ -105,7 +125,7 @@ namespace Righthand.MessageBus
                 {
                     DispatchCore(key, message);
                     // fire & forget for async handlers
-                    _ = DispatchCoreAsync(key, message, context ?? DispatchContext.Default);
+                    _ = DispatchCoreAsync(key, message, context ?? DefaultDispatchContext);
                 }
                 catch (Exception ex)
                 {
@@ -137,7 +157,7 @@ namespace Righthand.MessageBus
                 try
                 {
                     DispatchCore(message);
-                    var activeContext = context ?? DispatchContext.Default;
+                    var activeContext = context ?? DefaultDispatchContext;
                     // fire & forget for async handlers
                     _ = DispatchCoreAsync(message, false, activeContext).ConfigureAwait(activeContext.ConfigureAwait);
                 }
