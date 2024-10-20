@@ -19,6 +19,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>message-bus</PackageTags>
     <Version>2.0.0-beta.8</Version>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
     <Copyright>2018-2024, Righthand, Miha Markic</Copyright>
     <!--<PackageIconUrl></PackageIconUrl>-->
     <IncludeSymbols>true</IncludeSymbols>
@@ -52,5 +53,9 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Nito.AsyncEx" Version="5.1.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Services\Implementation\PerformanceEventDescendant.cs" />
+    <None Include="..\..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>
