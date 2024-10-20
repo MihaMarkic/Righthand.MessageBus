@@ -1,6 +1,7 @@
 # Righthand.MessageBus
 
 [![NuGet](https://img.shields.io/nuget/v/Righthand.MessageBus.svg)](https://www.nuget.org/packages/Righthand.MessageBus)
+[![NuGet](https://img.shields.io/nuget/vpre/Righthand.MessageBus.svg)](https://www.nuget.org/packages/Righthand.MessageBus)
 
 ## About
 
@@ -22,7 +23,8 @@ Subscription can be handled through synchronous (`Action<TMessage> or Action<TKe
 Let's say we have this message class hierarchy:
 
 ```csharp
-class Root {}
+class Root {
+}
 class Derived: Root {}
 ```
 
