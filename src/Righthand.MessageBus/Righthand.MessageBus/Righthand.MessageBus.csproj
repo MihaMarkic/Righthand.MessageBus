@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
+    <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -18,8 +18,8 @@
     <PackageProjectUrl>https://github.com/MihaMarkic/Righthand.MessageBus.git</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>message-bus</PackageTags>
-    <Version>2.0.0-beta.7</Version>
-    <Copyright>2018-2023, Righthand, Miha Markic</Copyright>
+    <Version>2.0.0-beta.8</Version>
+    <Copyright>2018-2024, Righthand, Miha Markic</Copyright>
     <!--<PackageIconUrl></PackageIconUrl>-->
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
