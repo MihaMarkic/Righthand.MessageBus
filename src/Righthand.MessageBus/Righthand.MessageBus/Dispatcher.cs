@@ -159,7 +159,7 @@ namespace Righthand.MessageBus
                     DispatchCore(message);
                     var activeContext = context ?? DefaultDispatchContext;
                     // fire & forget for async handlers
-                    _ = DispatchCoreAsync(message, false, activeContext).ConfigureAwait(activeContext.ConfigureAwait);
+                    _ = DispatchCoreAsync(false, message, activeContext).ConfigureAwait(activeContext.ConfigureAwait);
                 }
                 catch (Exception ex)
                 {

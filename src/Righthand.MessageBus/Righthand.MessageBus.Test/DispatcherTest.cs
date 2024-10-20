@@ -121,6 +121,16 @@ namespace Righthand.MessageBus.Test
                 Assert.That(wasReceived, Is.True);
             }
             [Test]
+            public void WhenKeyLessAsyncSubscription_MessageIsReceived()
+            {
+                bool wasReceived = false;
+                var actual = target.Subscribe<Root>(async (m, ct) => { wasReceived = true; });
+
+                target.Dispatch(new Root());
+
+                Assert.That(wasReceived, Is.True);
+            }
+            [Test]
             public void WhenNoSubscriptions_NoError()
             {
                 target.Dispatch("key", new object());
